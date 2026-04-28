@@ -1,6 +1,7 @@
+// src/components/ErrorBoundary.tsx
 import React from 'react';
 
-const searilizeError = (error: any) => {
+const formatError = (error: any) => {
   if (error instanceof Error) {
     return error.message + '\n' + error.stack;
   }
@@ -23,9 +24,11 @@ export class ErrorBoundary extends React.Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div className="p-4 border border-red-500 rounded">
-          <h2 className="text-red-500">Something went wrong.</h2>
-          <pre className="mt-2 text-sm">{searilizeError(this.state.error)}</pre>
+        <div className="p-4 border border-red-500 rounded bg-red-50">
+          <h2 className="text-red-600 font-semibold">Something went wrong.</h2>
+          <pre className="mt-2 text-sm text-red-700 whitespace-pre-wrap">
+            {formatError(this.state.error)}
+          </pre>
         </div>
       );
     }
