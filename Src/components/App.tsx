@@ -1,41 +1,42 @@
+// src/App.tsx
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 
-interface Todo {
+interface Task {
   id: number
   title: string
   completed: boolean
 }
 
-// Simulated API delay to show axios is working
+// Имитация задержки (эмуляция axios)
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 export default function App() {
-  const [todos, setTodos] = useState<Todo[]>([])
-  const [newTodo, setNewTodo] = useState('')
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [newTask, setNewTask] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // Load from localStorage on mount (empty by default)
+  // Загружаем задачи из localStorage при первом рендере
   useEffect(() => {
-    const saved = localStorage.getItem('todos')
+    const saved = localStorage.getItem('tasks')
     if (saved) {
-      setTodos(JSON.parse(saved))
+      setTasks(JSON.parse(saved))
     }
   }, [])
 
-  // Save to localStorage when todos change
+  // Сохраняем задачи при каждом изменении
   useEffect(() => {
-    localStorage.setItem('todos', JSON.stringify(todos))
-  }, [todos])
+    localStorage.setItem('tasks', JSON.stringify(tasks))
+  }, [tasks])
 
-  // Simulated API call with axios (for demo purposes)
+  // Эмулированный API-запрос через axios
   const apiCall = async (method: 'get' | 'post' | 'patch' | 'delete', url: string, data?: any) => {
     setLoading(true)
-    await delay(300) // Fake network delay
+    await delay(300) // фейковая задержка сети
     try {
       switch (method) {
         case 'get':
-          return { data: todos }
+          return { data: tasks }
         case 'post':
           const newItem = { id: Date.now(), ...data }
           return { data: newItem }
@@ -51,127 +52,122 @@ export default function App() {
     }
   }
 
-  // Add todo
-  const addTodo = async () => {
-    if (!newTodo.trim()) return
+  const handleAddTask = async () => {
+    if (!newTask.trim()) return
 
     try {
-      await apiCall('post', '/todos', { title: newTodo, completed: false })
-      const newItem: Todo = { id: Date.now(), title: newTodo, completed: false }
-      setTodos([newItem, ...todos])
-      setNewTodo('')
+      await apiCall('post', '/tasks', { title: newTask, completed: false })
+      const task: Task = { id: Date.now(), title: newTask, completed: false }
+      setTasks(prev => [task, ...prev])
+      setNewTask('')
     } catch (error) {
-      console.error('Error adding todo:', error)
+      console.error('Failed to add task:', error)
     }
   }
 
-  // Toggle todo
-  const toggleTodo = async (id: number) => {
+  const handleToggleTask = async (id: number) => {
     try {
-      const todo = todos.find(t => t.id === id)
-      if (todo) {
-        await apiCall('patch', `/todos/${id}`, { completed: !todo.completed })
-        setTodos(todos.map(t =>
+      const task = tasks.find(t => t.id === id)
+      if (task) {
+        await apiCall('patch', `/tasks/${id}`, { completed: !task.completed })
+        setTasks(prev => prev.map(t =>
           t.id === id ? { ...t, completed: !t.completed } : t
         ))
       }
     } catch (error) {
-      console.error('Error updating todo:', error)
+      console.error('Failed to toggle task:', error)
     }
   }
 
-  // Delete todo
-  const deleteTodo = async (id: number) => {
+  const handleDeleteTask = async (id: number) => {
     try {
-      await apiCall('delete', `/todos/${id}`)
-      setTodos(todos.filter(todo => todo.id !== id))
+      await apiCall('delete', `/tasks/${id}`)
+      setTasks(prev => prev.filter(t => t.id !== id))
     } catch (error) {
-      console.error('Error deleting todo:', error)
+      console.error('Failed to delete task:', error)
     }
   }
 
-  // Clear all todos
-  const clearAll = () => {
-    setTodos([])
+  const handleClearAll = () => {
+    setTasks([])
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
+    <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-lg mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold text-gray-800">Todo List</h1>
-          {todos.length > 0 && (
+          <h1 className="text-3xl font-bold text-gray-800">Task Manager</h1>
+          {tasks.length > 0 && (
             <button
-              onClick={clearAll}
+              onClick={handleClearAll}
               className="px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded transition"
             >
-              Clear All
+              Clear All Tasks
             </button>
           )}
         </div>
 
-        {/* Add todo form */}
+        {/* Форма добавления */}
         <div className="flex gap-2 mb-6">
           <input
             type="text"
-            value={newTodo}
-            onChange={(e) => setNewTodo(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && addTodo()}
-            placeholder="What needs to be done?"
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={newTask}
+            onChange={e => setNewTask(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleAddTask()}
+            placeholder="Enter a new task..."
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
           <button
-            onClick={addTodo}
-            className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:opacity-50"
-            disabled={!newTodo.trim()}
+            onClick={handleAddTask}
+            className="px-6 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition disabled:opacity-50"
+            disabled={!newTask.trim()}
           >
-            Add
+            Add Task
           </button>
         </div>
 
-        {/* Loading state */}
-        {loading && <p className="text-center text-gray-500">Processing...</p>}
+        {loading && <p className="text-center text-gray-500">Loading...</p>}
 
-        {/* Todo list */}
+        {/* Список задач */}
         <ul className="space-y-3">
-          {todos.map(todo => (
+          {tasks.map(task => (
             <li
-              key={todo.id}
+              key={task.id}
               className="flex items-center gap-3 p-4 bg-white rounded-lg shadow hover:shadow-md transition"
             >
               <input
                 type="checkbox"
-                checked={todo.completed}
-                onChange={() => toggleTodo(todo.id)}
-                className="w-5 h-5 accent-blue-500 cursor-pointer"
+                checked={task.completed}
+                onChange={() => handleToggleTask(task.id)}
+                className="w-5 h-5 accent-indigo-500 cursor-pointer"
               />
               <span
-                className={`flex-1 ${todo.completed ? 'line-through text-gray-400' : 'text-gray-800'}`}
+                className={`flex-1 ${task.completed ? 'line-through text-gray-400' : 'text-gray-800'}`}
               >
-                {todo.title}
+                {task.title}
               </span>
               <button
-                onClick={() => deleteTodo(todo.id)}
+                onClick={() => handleDeleteTask(task.id)}
                 className="px-3 py-1 text-red-500 hover:bg-red-50 rounded transition"
               >
-                Delete
+                Remove
               </button>
             </li>
           ))}
         </ul>
 
-        {/* Counter */}
-        {todos.length > 0 && (
+        {/* Счётчик */}
+        {tasks.length > 0 && (
           <p className="text-center text-gray-500 mt-4">
-            {todos.filter(t => t.completed).length} of {todos.length} completed
+            {tasks.filter(t => t.completed).length} of {tasks.length} completed
           </p>
         )}
 
-        {/* Empty state */}
-        {!loading && todos.length === 0 && (
+        {/* Пустое состояние */}
+        {!loading && tasks.length === 0 && (
           <div className="text-center mt-12">
-            <p className="text-gray-400 text-lg">No tasks yet</p>
-            <p className="text-gray-400 text-sm mt-2">Add your first task above</p>
+            <p className="text-gray-400 text-lg">Your task list is empty</p>
+            <p className="text-gray-400 text-sm mt-2">Start by adding a new task</p>
           </div>
         )}
       </div>
